@@ -1,0 +1,13 @@
+# Visual Studio内部のキャッシュ・設定ファイル
+.vs/
+*.user
+./DX12SandBox/imgui.ini
+
+# ビルド出力結果（exe, objなど）
+x64/
+Debug/
+Release/
+*.exe
+*.pdb
+*.obj
+*.ilk
