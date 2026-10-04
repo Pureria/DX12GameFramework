@@ -3,7 +3,7 @@
 DirectX 12の基礎を学習し、独自のフレームワークを構築することを目的としたプロジェクトです。
 単に画面にモデルを描画するだけでなく、「ゲームを作るための基盤」として利用できるものを目標にしています。
 
-![screenshot](.docs/screenshot.png)
+![screenshot](./docs/screenshot.png)
 
 ## 実装機能
 ### DirectX 12の低レイヤー制御
