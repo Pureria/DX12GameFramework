@@ -105,11 +105,16 @@ bool PipelineManager::Initialize(GraphicsEngine* engine)
 
     if (FAILED(hr)) { return false; }
 
+    ComPtr<ID3D12RootSignature> rootSig;
     hr = _graphicsEngine->GetDevice()->CreateRootSignature(
         0,
         rootSigBlob->GetBufferPointer(),
         rootSigBlob->GetBufferSize(),
-        IID_PPV_ARGS(&_rootSignature));
+        IID_PPV_ARGS(&rootSig));
+
+    if (FAILED(hr)) { return false; }
+
+    _rootSignatures["Default"] = rootSig;
 
     return true;
 }
@@ -124,6 +129,13 @@ bool PipelineManager::CreatePipeline(const std::string& pipelineName, const Pipe
         return false;
     }
 
+    auto itRoot = _rootSignatures.find(desc.rootSignatureName);
+    if (itRoot == _rootSignatures.end()) {
+        printf("Error: Root Signature '%s' not found!\n", desc.rootSignatureName.c_str());
+        return false;
+    }
+    ID3D12RootSignature* pTargetRootSig = itRoot->second.Get();
+
     // Input Layoutの定義（現状はすべてのモデルで共通の頂点構造とする）
     D3D12_INPUT_ELEMENT_DESC inputElementDesc[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -136,7 +148,7 @@ bool PipelineManager::CreatePipeline(const std::string& pipelineName, const Pipe
 
     // PSOの設計図を作成
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-    psoDesc.pRootSignature = _rootSignature.Get();
+    psoDesc.pRootSignature = pTargetRootSig;
     psoDesc.VS.pShaderBytecode = vsBlob->GetBufferPointer();
     psoDesc.VS.BytecodeLength = vsBlob->GetBufferSize();
     psoDesc.PS.pShaderBytecode = psBlob->GetBufferPointer();
@@ -184,19 +196,40 @@ bool PipelineManager::CreatePipeline(const std::string& pipelineName, const Pipe
     }
 
     // 辞書に登録
-    _pipelines[pipelineName] = pipelineState;
+    PipelineData data;
+    data.pso = pipelineState;
+    data.pRootSignature = pTargetRootSig;
+    _pipelines[pipelineName] = data;
 
     return true;
 }
 
 void PipelineManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& pipelineName)
 {
+    if (_currentPipelineName == pipelineName) {
+        return; // すでに同じものがセットされているので何もしない
+    }
+
     auto it = _pipelines.find(pipelineName);
     if (it != _pipelines.end()) {
-        commandList->SetGraphicsRootSignature(_rootSignature.Get());
-        commandList->SetPipelineState(it->second.Get());
+        PipelineData& data = it->second;
+
+        if (_currentRootSignature != data.pRootSignature) {
+            commandList->SetGraphicsRootSignature(data.pRootSignature);
+            _currentRootSignature = data.pRootSignature;
+
+        }
+
+        commandList->SetPipelineState(data.pso.Get());
+        _currentPipelineName = pipelineName;
     }
     else {
         printf("Error: Pipeline '%s' not found!\n", pipelineName.c_str());
     }
+}
+
+void PipelineManager::ResetCurrentPipeline()
+{
+    _currentRootSignature = nullptr;
+    _currentPipelineName = "";
 }
