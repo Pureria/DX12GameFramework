@@ -18,6 +18,8 @@ struct PipelineDesc {
 	bool isTransparent = false;
 
 	std::string rootSignatureName = "Default";
+	D3D12_INPUT_ELEMENT_DESC* inputLayout = nullptr;
+	UINT numElements = 0;
 };
 
 // PSOと紐づくRoot Signatureの参照をセットで保持する構造体
@@ -44,6 +46,7 @@ public:
 	bool Initialize(GraphicsEngine* engine);
 	bool CreatePipeline(const std::string& pipelineName, const PipelineDesc& desc);
 	void SetPipeline(ID3D12GraphicsCommandList* commandList, const std::string& pipelineName);
+	void SetRootSignatureOnly(ID3D12GraphicsCommandList* commandList, const std::string& rootSignatureName = "Default");
 	void ResetCurrentPipeline();
 
 	ID3D12RootSignature* GetRootSignature(const std::string& name = "Default") const {

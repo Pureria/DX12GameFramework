@@ -136,16 +136,6 @@ bool PipelineManager::CreatePipeline(const std::string& pipelineName, const Pipe
     }
     ID3D12RootSignature* pTargetRootSig = itRoot->second.Get();
 
-    // Input Layoutの定義（現状はすべてのモデルで共通の頂点構造とする）
-    D3D12_INPUT_ELEMENT_DESC inputElementDesc[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-    };
-
     // PSOの設計図を作成
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.pRootSignature = pTargetRootSig;
@@ -154,12 +144,15 @@ bool PipelineManager::CreatePipeline(const std::string& pipelineName, const Pipe
     psoDesc.PS.pShaderBytecode = psBlob->GetBufferPointer();
     psoDesc.PS.BytecodeLength = psBlob->GetBufferSize();
 
-    psoDesc.InputLayout.pInputElementDescs = inputElementDesc;
-    psoDesc.InputLayout.NumElements = _countof(inputElementDesc);
+    psoDesc.InputLayout.pInputElementDescs = desc.inputLayout;
+    psoDesc.InputLayout.NumElements = desc.numElements;
 
     // ラスタライザ設定（三角形をどう塗りつぶすか）
     psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
     psoDesc.RasterizerState.CullMode = desc.cullMode;
+    psoDesc.RasterizerState.DepthClipEnable = TRUE;
+
+    psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
     // ブレンド設定
     if (desc.isTransparent) {
@@ -225,6 +218,20 @@ void PipelineManager::SetPipeline(ID3D12GraphicsCommandList* commandList, const 
     }
     else {
         printf("Error: Pipeline '%s' not found!\n", pipelineName.c_str());
+    }
+}
+
+void PipelineManager::SetRootSignatureOnly(ID3D12GraphicsCommandList* commandList, const std::string& rootSignatureName)
+{
+    auto it = _rootSignatures.find(rootSignatureName);
+    if (it != _rootSignatures.end()) {
+        if (_currentRootSignature != it->second.Get()) {
+            commandList->SetGraphicsRootSignature(it->second.Get());
+            _currentRootSignature = it->second.Get();
+        }
+    }
+    else {
+        printf("Error: Root Signature '%s' not found!\n", rootSignatureName.c_str());
     }
 }
 
