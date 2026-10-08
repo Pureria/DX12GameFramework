@@ -3,91 +3,6 @@
 
 bool Skybox::Initialize(GraphicsEngine* engine, ID3D12RootSignature* rootSignature, const char* texturePaths[6])
 {
-	// Skybox Shader Compile
-	ComPtr<ID3DBlob> skyboxVsBlob;
-	ComPtr<ID3DBlob> skyboxPsBlob;
-	ComPtr<ID3DBlob> errorBlob;
-
-	HRESULT hr;
-	hr = D3DCompileFromFile(
-		L"skybox.hlsl",
-		nullptr,
-		nullptr,
-		"VSMain",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&skyboxVsBlob,
-		&errorBlob
-	);
-
-	if (FAILED(hr)) {
-		if (errorBlob) {
-			printf("Skybox VS Compile Error: %s\n", (char*)errorBlob->GetBufferPointer());
-		}
-		return false;
-	}
-
-	hr = D3DCompileFromFile(
-		L"skybox.hlsl",
-		nullptr,
-		nullptr,
-		"PSMain",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&skyboxPsBlob,
-		&errorBlob
-	);
-
-	if (FAILED(hr)) {
-		if (errorBlob) {
-			printf("Skybox PS Compile Error: %s\n", (char*)errorBlob->GetBufferPointer());
-		}
-		return false;
-	}
-
-	D3D12_INPUT_ELEMENT_DESC skyboxInputLayout[] = {
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-	};
-
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC skyboxPsoDesc = {};
-	skyboxPsoDesc.VS.pShaderBytecode = skyboxVsBlob->GetBufferPointer();
-	skyboxPsoDesc.VS.BytecodeLength = skyboxVsBlob->GetBufferSize();
-	skyboxPsoDesc.PS.pShaderBytecode = skyboxPsBlob->GetBufferPointer();
-	skyboxPsoDesc.PS.BytecodeLength = skyboxPsBlob->GetBufferSize();
-	skyboxPsoDesc.InputLayout.pInputElementDescs = skyboxInputLayout;
-	skyboxPsoDesc.InputLayout.NumElements = _countof(skyboxInputLayout);
-	skyboxPsoDesc.pRootSignature = rootSignature;
-
-	skyboxPsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	skyboxPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-
-	skyboxPsoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	skyboxPsoDesc.DepthStencilState.DepthEnable = TRUE;
-	skyboxPsoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	skyboxPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	skyboxPsoDesc.DepthStencilState.StencilEnable = FALSE;
-	skyboxPsoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-
-	skyboxPsoDesc.SampleMask = UINT_MAX;
-	skyboxPsoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	skyboxPsoDesc.NumRenderTargets = 1;
-	skyboxPsoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	skyboxPsoDesc.SampleDesc.Count = 1;
-
-	// Z=Wにより空の深度は常に1.0になるため、LESS_EQUAL を指定して描画を許可
-	skyboxPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	// 他のモデル描画に影響を与えないよう、深度バッファへの書き込みを無効化
-	skyboxPsoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-
-	hr = engine->GetDevice()->CreateGraphicsPipelineState(&skyboxPsoDesc, IID_PPV_ARGS(&_pipelineState));
-	if (FAILED(hr)) {
-		printf("Skybox PSOの作成に失敗しました。\n");
-		return false;
-	}
-
 	D3D12_HEAP_PROPERTIES heapProps = {};
 	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
 
@@ -271,7 +186,7 @@ bool Skybox::Initialize(GraphicsEngine* engine, ID3D12RootSignature* rootSignatu
 void Skybox::Draw(GraphicsEngine* engine)
 {
 	// skybox専用のパイプラインに切り替える
-	engine->GetCommandList()->SetPipelineState(_pipelineState.Get());
+	engine->GetPipelineManager()->SetPipeline(engine->GetCommandList(), "Skybox");
 
 	// skyboxを描画する「箱」の頂点とインデックスをセット
 	engine->GetCommandList()->IASetVertexBuffers(0, 1, &_vbView);

@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "Camera.h"
 #include "Time.h"
+#include "GraphicsEngine.h"
 
 Camera::Camera()
 {
@@ -10,7 +11,48 @@ Camera::Camera()
 	_proj = DirectX::XMMatrixIdentity();
 }
 
-Camera::~Camera(){ }
+Camera::~Camera() {}
+
+bool Camera::Initialize(GraphicsEngine* engine)
+{
+	UINT cbSize = (sizeof(SceneConstantBuffer) + 255) & ~255;
+
+	D3D12_HEAP_PROPERTIES heapProps = {};
+	heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RESOURCE_DESC cbDesc = {};
+	cbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbDesc.Width = cbSize;
+	cbDesc.Height = 1;
+	cbDesc.DepthOrArraySize = 1;
+	cbDesc.MipLevels = 1;
+	cbDesc.SampleDesc.Count = 1;
+	cbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	HRESULT hr = engine->GetDevice()->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&cbDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&_cameraConstantBuffer));
+
+	if (FAILED(hr)) return false;
+
+	// 毎フレーム書き込むため、ずっとMap（CPUからアクセス可能）にしておく（Persistent Mapping）
+	_cameraConstantBuffer->Map(0, nullptr, &_mappedData);
+
+	return true;
+}
+
+void Camera::Bind(GraphicsEngine* engine)
+{
+	engine->GetPipelineManager()->SetRootSignatureOnly(engine->GetCommandList());
+
+	if (_cameraConstantBuffer) {
+		engine->GetCommandList()->SetGraphicsRootConstantBufferView(0, _cameraConstantBuffer->GetGPUVirtualAddress());
+	}
+}
 
 void Camera::Update() {
 	Move();
@@ -33,6 +75,14 @@ void Camera::Update() {
 
 	// カメラの位置、向いている方向、上方向を元にView（ビュー）行列を作成
 	_view = DirectX::XMMatrixLookToLH(position, forward, up);
+
+	// 計算した行列をそのまま定数バッファへ書き込む
+	if (_mappedData) {
+		SceneConstantBuffer cbData = {};
+		cbData.view = DirectX::XMMatrixTranspose(_view);
+		cbData.proj = DirectX::XMMatrixTranspose(_proj);
+		memcpy(_mappedData, &cbData, sizeof(SceneConstantBuffer));
+	}
 }
 
 void Camera::SetPosition(float x, float y, float z)

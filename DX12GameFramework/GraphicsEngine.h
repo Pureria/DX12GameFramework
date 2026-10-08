@@ -1,9 +1,13 @@
 ﻿#pragma once
+#include <d3d12.h>
+#include <wrl/client.h>
+#include "PipelineManager.h"
 #include "define.h"
 
 class GraphicsEngine
 {
 private:
+	PipelineManager _pipelineManager;
 	ComPtr<ID3D12Device> _device;
 	ComPtr<ID3D12CommandQueue> _commandQueue;
 	ComPtr<IDXGISwapChain4> _swapChain;
@@ -35,5 +39,6 @@ public:
 	ID3D12Device* GetDevice() const { return _device.Get(); }
 	ID3D12GraphicsCommandList* GetCommandList() const { return _commandList.Get(); }
 	ID3D12CommandQueue* GetCommandQueue() const { return _commandQueue.Get(); }
+	PipelineManager* GetPipelineManager() { return&_pipelineManager; }
 };
 

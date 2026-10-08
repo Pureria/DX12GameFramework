@@ -70,6 +70,7 @@ void Actor::Update()
 
 void Actor::Draw(GraphicsEngine* engine)
 {
+	engine->GetPipelineManager()->SetPipeline(engine->GetCommandList(), "Standard");
 	engine->GetCommandList()->SetGraphicsRootConstantBufferView(1, _objectConstantBuffer->GetGPUVirtualAddress());
 
 	if (_model) {

@@ -126,7 +126,7 @@ bool GraphicsEngine::Initialize(HWND hwnd)
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-	
+
 	_device->CreateDepthStencilView(_depthBuffer.Get(), &dsvDesc, _dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Command Allocator の作成
@@ -153,6 +153,11 @@ bool GraphicsEngine::Initialize(HWND hwnd)
 
 	_fenceValue = 0;
 	_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+	if (!_pipelineManager.Initialize(this)) {
+		printf("Failed to initialize PipelineManager\n");
+		return false;
+	}
 
 	return true;
 }
@@ -232,6 +237,7 @@ void GraphicsEngine::ResetCommandList()
 {
 	_commandAllocator->Reset();
 	_commandList->Reset(_commandAllocator.Get(), nullptr);
+	_pipelineManager.ResetCurrentPipeline();
 }
 
 void GraphicsEngine::WaitForGPU()

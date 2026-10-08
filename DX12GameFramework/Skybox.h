@@ -4,7 +4,6 @@
 class Skybox
 {
 private:
-	ComPtr<ID3D12PipelineState> _pipelineState;
 	ComPtr<ID3D12Resource> _vertexBuffer;
 	ComPtr<ID3D12Resource> _indexBuffer;
 
