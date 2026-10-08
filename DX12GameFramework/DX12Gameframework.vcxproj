@@ -203,6 +203,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PipelineManager.cpp" />
     <ClCompile Include="QuadModel.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Time.cpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="IModel.h" />
     <ClInclude Include="AssimpModel.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PipelineManager.h" />
     <ClInclude Include="QuadModel.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Time.h" />
