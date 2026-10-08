@@ -28,7 +28,7 @@ DirectX 12の基礎を学習し、独自のフレームワークを構築する�
   - stb\_image https://github.com/nothings/stb (テクスチャ読み込み）
 ## 今後実装していくもの
 - [x] スカイボックスのコードを専用クラスとしてまとめる
-- [ ] PipelineManager の構築によるマルチシェーダー管理
+- [x] PipelineManager の構築によるマルチシェーダー管理
 - [ ] ライティングの実装
 - [ ] ポストエフェクトの実装
 
