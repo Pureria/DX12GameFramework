@@ -28,9 +28,15 @@ struct MeshResource {
 	int materialIndex;
 };
 
+struct DirectionLight {
+	XMFLOAT4 direction;	// xyz	: 方向
+	XMFLOAT4 color;		// rgba : 光の色
+};
+
 struct SceneConstantBuffer {
 	XMMATRIX view;
 	XMMATRIX proj;
+	DirectionLight light;
 };
 
 struct ObjectConstantBuffer {

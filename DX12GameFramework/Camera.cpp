@@ -81,6 +81,17 @@ void Camera::Update() {
 		SceneConstantBuffer cbData = {};
 		cbData.view = DirectX::XMMatrixTranspose(_view);
 		cbData.proj = DirectX::XMMatrixTranspose(_proj);
+
+		// ライトの方向ベクトル
+		DirectX::XMVECTOR lightDir = DirectX::XMVectorSet(1.0f, -1.0f, 1.0f, 0.0f);
+
+		// 計算用に正規化
+		lightDir = DirectX::XMVector3Normalize(lightDir);
+		DirectX::XMStoreFloat4(&cbData.light.direction, lightDir);
+
+		// ライトの色（白）
+		cbData.light.color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
 		memcpy(_mappedData, &cbData, sizeof(SceneConstantBuffer));
 	}
 }
