@@ -5,6 +5,8 @@ cbuffer SceneConstantBuffer : register(b0)
 {
     matrix view;
     matrix proj;
+    float4 lightDir;
+    float4 lightColor;
 }
 
 struct VSInput
